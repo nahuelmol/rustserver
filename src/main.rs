@@ -1,6 +1,7 @@
 use std::fs::File;
-use std::io::{ Read, Seek, SeekFrom};
-use plotters::prelude::*;
+use std::io::{ Read, Seek, SeekFrom, stdin};
+use image::{Rgb, RgbImage};
+
 
 fn segreader(file: &mut File){
     let mut header = [0;3600];
@@ -14,7 +15,7 @@ fn segreader(file: &mut File){
     }
 
     let ns = u16::from_be_bytes([header[3221],header[3222]]);
-    let dt = u16::from_be_bytes([header[3225],header[3226]]);
+    let _dt = u16::from_be_bytes([header[3225],header[3226]]);
     let fmt = u16::from_be_bytes([header[3227],header[3227]]);
 
     println!("samples per trace: {}", ns);
@@ -47,38 +48,53 @@ fn segreader(file: &mut File){
         .map(|bytes| i16::from_be_bytes([bytes[0],bytes[1]]))
         .collect();
 
-    let root = BitMapBackend::new("plotters-doc-data/0.png", (640, 480)).into_drawing_area();
-    root.fill(&WHITE).unwrap();
-    let mut chart = ChartBuilder::on(&root)
-        .caption("y=x^2", ("sans-serif", 50).into_font())
-        .margin(5)
-        .x_label_area_size(30)
-        .y_label_area_size(30)
-        .build_cartesian_2d(-1f32..1f32, -0.1f32..1f32)
-        .unwrap();
+    let time_step = 1.0 / 1000.0;
+    let time = (0..samples.len()).map(|x| x as f64 * time_step).collect::<Vec<f64>>();
+    println!("samples {}", samples.len());
+    println!("time {}",time.len());
 
-    chart.configure_mesh().draw()
-        .unwrap();
+    image_trace(samples, time);
 
-    chart
-        .draw_series(LineSeries::new(
-            (-50..=50).map(|x| x as f32 / 50.0).map(|x| (x, x * x)),
-            &RED,
-        ))
-        //.label("y = x^2")
-        //.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED))
-        .unwrap();
-    
+}
 
-    chart
-        .configure_series_labels()
-        .background_style(&WHITE.mix(0.8))
-        .border_style(&BLACK)
-        .draw()
-        .unwrap();
+fn image_trace(samples: Vec<i16>, time: Vec<f64>){
+    let mysamp = &samples[0..800];
+    let mytime = &time[0..800];
 
-    root.present()
-        .unwrap();
+
+    let mut img = RgbImage::new(800,600);
+    let mut t = 0;
+    let escala = 200;
+    let scaled: Vec<f64> = mysamp.iter()
+        .map(|x| (*x as f64) / (escala as f64))
+        .collect();
+    /*let max = scaled.iter()
+        .fold(f64::MAX, |a,&b| a.max(b));
+    let min = scaled.iter()
+        .fold(f64::MIN, |a,&b| a.min(b));
+    let range = max - min;*/
+        
+    for y in scaled.iter(){
+        let y = 300.0 - y;
+        println!("y -> {}", y);
+        img.put_pixel(t, y as u32, Rgb([255,0,0]));
+        t += 1;
+    }
+    let _ = img.save("onda_senoidal.png");
+}
+
+fn image_working(a: u32){
+    let mut img = RgbImage::new(800,600);
+    let f = 0.01;
+    let w = 2.0 * std::f64::consts::PI * f;
+    let a = a as f64;
+
+    for t in 0..800 {
+        let y_t = (a * (w * (t as f64)).sin()) + 300.0;
+        img.put_pixel(t, y_t as u32, Rgb([255,0,0]));
+    }
+
+    let _ = img.save("onda_senoidal.png");
 }
 
 fn main() {
@@ -87,4 +103,18 @@ fn main() {
         Ok(mut file) => segreader(&mut file),
         Err(_) => println!("not readable"),
     }
+
+    println!("please, amplitude..");
+    let mut amplitude = String::new();
+    stdin()
+        .read_line(&mut amplitude)
+        .expect("Error in amplitude");
+
+    let amplitude: u32 = amplitude.trim()
+        .parse()
+        .expect("error parsing");
+
+    println!("trying with -> {}", amplitude);
+
+    image_working(amplitude);
 }
