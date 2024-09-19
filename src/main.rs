@@ -10,6 +10,8 @@ use giga_segy_in::SegyFile;
 mod cmds;
 mod objs;
 mod filesys;
+mod displays;
+mod project;
 
 use objs::obj::CliCommand;
 use cmds::cmd_switch::switcher;
@@ -31,16 +33,6 @@ fn main() {
     let dir = PathBuf::from(path);
     let full_path = dir.join("Line_301.segy");
     let _file = SegyFile::open(full_path.to_str().unwrap(), Default::default()).unwrap();
-
-    /*let text_header: &str = file.get_text_header();
-    println!("Text header: {:?}", text_header);
-
-    for line in file.get_text_header_lines() {
-        println!("{}", line);
-    }
-
-    let bin_header = file.get_bin_header();
-    println!("Bin header: {}", bin_header);*/
 
     /*for trace in file.traces_iter() {
         println!("Trace header: {}", trace.get_header());

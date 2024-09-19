@@ -6,6 +6,7 @@ use crate::filesys::checker::get_all_content;
 use crate::filesys::file::{ readfile, loadfile };
 
 use crate::project::methods::{ startproject, checkprojects };
+use crate::displays::traces::{ display_trace };
 
 pub fn switcher(cmd:&CliCommand){
     let action = cmd.get_action();
@@ -35,6 +36,8 @@ pub fn switcher(cmd:&CliCommand){
         startproject();
     } else if action == "projects" {
         checkprojects();
+    } else if action == "dt" { //display trace
+        display_trace();
     } else {
         println!("not registered");
     }
