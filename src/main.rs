@@ -9,6 +9,7 @@ use giga_segy_in::SegyFile;
 
 mod cmds;
 mod objs;
+mod filesys;
 
 use objs::obj::CliCommand;
 use cmds::cmd_switch::switcher;

@@ -38,10 +38,23 @@ impl CliCommand {
     }
 
     pub fn get_target(&self) -> &str {
-        &self.flags[1]
+            &self.flags[1]
     }
+
+    pub fn is_target(&self) -> bool {
+        let len = self.flags.len() as i32;
+        if len > 1 {
+            true
+        } else {
+            false
+        }
+    } 
 
     pub fn get_filter_type(&self) -> &str {
         &self.flags[2]
+    }
+
+    pub fn get_flags_size(&self) -> usize {
+        self.flags.len()
     }
 }
