@@ -1,7 +1,3 @@
-use std::fs::{ File, metadata };
-use std::io::{ Read, Seek, SeekFrom, stdin};
-use image::{Rgb, RgbImage};
-use byteorder::{ BigEndian, ByteOrder };
 
 use std::env;
 use std::path::PathBuf;

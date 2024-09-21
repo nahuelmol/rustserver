@@ -385,6 +385,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "goseis"
+version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "giga-segy-core",
+ "giga-segy-in",
+ "image",
+ "serde_json",
+]
+
+[[package]]
 name = "half"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -970,16 +981,6 @@ dependencies = [
  "libc",
  "linux-raw-sys",
  "windows-sys 0.52.0",
-]
-
-[[package]]
-name = "rustserver"
-version = "0.1.0"
-dependencies = [
- "byteorder",
- "giga-segy-core",
- "giga-segy-in",
- "image",
 ]
 
 [[package]]

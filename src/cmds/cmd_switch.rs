@@ -1,11 +1,12 @@
 
 use crate::objs::obj::CliCommand;
 use crate::cmds::filters::filter_switch;
-use crate::filesys::checker::check_raw_target;
+use crate::filesys::checker::{ check_raw_target, current_project };
 use crate::filesys::checker::get_all_content;
 use crate::filesys::file::{ readfile, loadfile };
 
 use crate::project::methods::{ startproject, checkprojects };
+use crate::project::methods::{ switch_projects };
 use crate::displays::traces::{ display_trace };
 
 pub fn switcher(cmd:&CliCommand){
@@ -38,6 +39,10 @@ pub fn switcher(cmd:&CliCommand){
         checkprojects();
     } else if action == "dt" { //display trace
         display_trace();
+    } else if action == "current" {
+        current_project();
+    } else if action == "sw" {
+        switch_projects(cmd.get_target());
     } else {
         println!("not registered");
     }

@@ -1,6 +1,9 @@
 use std::fs;
+use std::fs::File;
+use std::fs::OpenOptions;
 use std::env;
 use std::io;
+use serde_json;
 
 pub fn startproject(){
     let mut s = String::new();
@@ -17,14 +20,17 @@ pub fn startproject(){
                 return;
             };
         }
-        let path = path.join(s);
 
-        if let Err(err) = fs::create_dir(path) {
+        let path = path.join(s.clone().to_string());
+        println!("newproject {}", path.display());
+        if let Err(err) = fs::create_dir(path.to_str().expect("error").trim()) {
             println!("some error {}", err);
         }
+        ontop(s);
     } else {
         return;
     }
+
 }
 
 pub fn checkprojects(){
@@ -39,4 +45,59 @@ pub fn checkprojects(){
             }
         }
     };
+}
+
+
+fn ontop(s:String){
+    if let Ok(path) = env::current_dir() {
+        let path = path.join("project/current.json");
+        println!("path {:?}", path);
+        let data = serde_json::json!({
+            "nombre":s,
+            "version":"1.0",
+        });
+        if !path.exists() {
+            if let Err(_) = File::create(path.clone()) {
+                println!("error creating file");
+            }
+        }
+        let file = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(path)
+            .unwrap();
+
+        serde_json::to_writer(file,&data).unwrap();
+    }
+    /*if let Ok(path) = fs::current_dir(path) {
+        let path = path.join("project/current.txt");
+        if path.exsits() {
+            if let Ok(file) = File::open(path){
+                
+            };
+        };
+    }*/
+}
+
+pub fn switch_projects(target:&str){
+    if let Ok(path) = env::current_dir() {
+        let path = path.join("project/current.json");
+        println!("path {:?}", path);
+        let data = serde_json::json!({
+            "nombre":target,
+            "version":"1.0",
+        });
+        if !path.exists() {
+            if let Err(_) = File::create(path.clone()) {
+                println!("error creating file");
+            }
+        }
+        let file = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(path)
+            .unwrap();
+
+        serde_json::to_writer(file,&data).unwrap();
+    }
 }

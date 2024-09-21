@@ -1,8 +1,9 @@
-use std::io;
 use std::fs;
 use std::env;
-use std::path::Path;
+use serde_json::Value;
+use std::fs::File;
 
+use std::io::Read;
 
 pub fn check_raw_target(target:&str){
     if let Ok(path) =  env::current_dir() {
@@ -26,4 +27,19 @@ pub fn get_all_content(){
             }
         }
     }
+}
+
+pub fn current_project() {
+    if let Ok(path) = env::current_dir() {
+        let path = path.join("project/current.json");
+        if let Ok(mut file) = File::open(path) {
+            let mut content = String::new();
+            file.read_to_string(&mut content).unwrap();
+            let jsoned: Value = serde_json::from_str(&content).unwrap();
+            println!("{:?}", jsoned);
+        };
+    } else {
+        return;
+    };
+
 }
