@@ -36,7 +36,7 @@ pub fn current_project() {
             let mut content = String::new();
             file.read_to_string(&mut content).unwrap();
             let jsoned: Value = serde_json::from_str(&content).unwrap();
-            println!("{:?}", jsoned);
+            println!("{}", jsoned["nombre"].as_str().unwrap());
         };
     } else {
         return;

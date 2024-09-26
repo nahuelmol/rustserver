@@ -22,7 +22,7 @@ pub fn startproject(){
         }
 
         let path = path.join(s.clone().to_string());
-        println!("newproject {}", path.display());
+        println!("newproject {}", s.clone());
         if let Err(err) = fs::create_dir(path.to_str().expect("error").trim()) {
             println!("some error {}", err);
         }
@@ -39,9 +39,18 @@ pub fn checkprojects(){
         if let Ok(dir) = fs::read_dir(path) {
             for entry in dir {
                 let entry = entry.unwrap();
-                println!("{}", entry.file_name()
+                let mut dir = true;
+                let filename = entry.file_name()
                     .to_string_lossy()
-                    .into_owned());
+                    .into_owned();
+                for c in filename.chars() {
+                    if c == '.' {
+                        dir = false;
+                    }
+                };
+                if dir == true {
+                    println!("{}", filename);
+                }
             }
         }
     };
@@ -82,7 +91,6 @@ fn ontop(s:String){
 pub fn switch_projects(target:&str){
     if let Ok(path) = env::current_dir() {
         let path = path.join("project/current.json");
-        println!("path {:?}", path);
         let data = serde_json::json!({
             "nombre":target,
             "version":"1.0",
