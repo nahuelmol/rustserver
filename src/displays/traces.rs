@@ -6,5 +6,5 @@ pub fn display_trace(){
     stdin()
         .read_line(&mut opc)
         .expect("err at stdin");
-    println!("hello {}", opc);
+    println!("trace is {}", opc);
 }

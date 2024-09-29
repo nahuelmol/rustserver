@@ -32,7 +32,7 @@ pub fn switcher(cmd:&CliCommand){
             get_all_content();
         }
     } else if action == "load" {
-        loadfile(cmd.get_target());
+        loadfile(cmd.get_target(), cmd);
     } else if action == "startproject" {
         startproject();
     } else if action == "projects" {

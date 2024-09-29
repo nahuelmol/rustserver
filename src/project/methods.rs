@@ -78,14 +78,6 @@ fn ontop(s:String){
 
         serde_json::to_writer(file,&data).unwrap();
     }
-    /*if let Ok(path) = fs::current_dir(path) {
-        let path = path.join("project/current.txt");
-        if path.exsits() {
-            if let Ok(file) = File::open(path){
-                
-            };
-        };
-    }*/
 }
 
 pub fn switch_projects(target:&str){

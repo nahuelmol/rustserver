@@ -1,9 +1,11 @@
 use std::env;
 use std::fs::{ File, OpenOptions };
 use std::io::{ Write, Read };
+use std::fs;
 use serde_json::Value;
 
 use giga_segy_in::SegyFile;
+use crate::objs::obj::CliCommand;
 
 pub fn readfile(target:&str) {
     if let Ok(path) =  env::current_dir() {
@@ -32,7 +34,70 @@ pub fn readfile(target:&str) {
     }
 }
 
-pub fn loadfile(target:&str){
+fn currentp_name() -> Result<String, String> {
+    if let Ok(path) = env::current_dir() {
+        let pathproject = path.join("project")
+            .join("current.json");
+        let mut file = File::open(pathproject).unwrap();
+        let mut content = String::new();
+        file.read_to_string(&mut content).unwrap();
+        let json: Value = serde_json::from_str(&content)
+            .unwrap();
+        let projectname = json["nombre"].as_str()
+            .unwrap();
+        return Ok(projectname.to_string());
+    } else {
+        return Err("error".to_string());
+    }
+}
+
+
+fn move_file(file: &str) {
+
+    if let Ok(path) = env::current_dir() {
+        let rawfile = path.join("data").join(file);
+        let projectname = match currentp_name() {
+            Ok(name) => name,
+            Err(_) => { 
+                println!("error getting the name");
+                return;
+            },
+        };
+        let file_to_add = path.join("project").join(projectname.trim()).join(file);
+        println!("{}", file_to_add.display());
+        if !file_to_add.exists() {
+            if let Err(err) = File::create(file_to_add.clone()) {
+                println!("cannot create file: {}", err);
+            };
+        }
+
+        let mut newfile = match OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(file_to_add) {
+            
+            Ok(file) => file,
+            Err(err) => { 
+                println!("error: {}", err);
+                return;
+            }
+        };
+        match fs::read(rawfile) {
+            Ok(content) => {
+                match newfile.write_all(&content) {
+                    Ok(_) => println!("file written"),
+                    Err(_) => println!("error at written"),
+                }
+            },
+            Err(_) => {
+                println!("error reading");
+            }
+        }
+    }
+
+}
+
+pub fn loadfile(target:&str, cmd:&CliCommand){
     if let Ok(mainpath) = env::current_dir() {
         let path = mainpath.join("project").join("current.json");
         let mut file = File::open(path).unwrap();
@@ -43,7 +108,13 @@ pub fn loadfile(target:&str){
         let projectname = json["nombre"].as_str()
             .unwrap();
 
-        let newline = [target, " up"].concat();
+        let state = if let Ok(state_file) = cmd.get_state() {
+            let state = [" ", state_file].concat();
+            state
+        } else {
+            " up".to_string()
+        };
+        let newline = [target, &state].concat();
         let registerpath = mainpath.join("project")
             .join(projectname.trim())
             .join("register.txt");
@@ -54,10 +125,6 @@ pub fn loadfile(target:&str){
                 println!("cannot create file");
             };
         }
-        /*if let Ok(mut file) = File::open(registerpath) {
-            file.write_all(newline)
-                .unwrap();
-        }*/
 
         let mut file = OpenOptions::new()
             .append(true)
@@ -65,6 +132,6 @@ pub fn loadfile(target:&str){
             .unwrap();
 
         writeln!(file, "{}", newline.as_str()).unwrap();
+        move_file(target);
     };
-
 }

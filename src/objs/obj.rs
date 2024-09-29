@@ -57,4 +57,17 @@ impl CliCommand {
     pub fn get_flags_size(&self) -> usize {
         self.flags.len()
     }
+
+    pub fn get_state(&self) -> Result<&str, &str> {
+        let result = std::panic::catch_unwind(||&self.flags[2]);
+        match result {
+            Ok(opc) => {
+                Ok(opc)
+            },
+            Err(_)=> {
+                Err("error")
+            }
+
+        }
+    }
 }
