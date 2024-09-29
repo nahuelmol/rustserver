@@ -1,6 +1,6 @@
 use std::env;
 use std::fs::{ File, OpenOptions };
-use std::io::{ Write, Read };
+use std::io::{ Write, Read, BufReader, BufRead };
 use std::fs;
 use serde_json::Value;
 
@@ -134,4 +134,54 @@ pub fn loadfile(target:&str, cmd:&CliCommand){
         writeln!(file, "{}", newline.as_str()).unwrap();
         move_file(target);
     };
+}
+
+fn take_name(line:String) -> Result<String, String> {
+    let mut name = String::new();
+    for c in line.chars() {
+        if c == ' ' {
+            return Ok(name);
+        }
+        name.push(c);
+    }
+    Err("error".to_string())
+}
+
+pub fn delete_file(file:&str) {
+    if let Ok(path) = env::current_dir() { 
+        let projectname = match currentp_name() {
+            Ok(name) => name,
+            Err(_) => { 
+                println!("error getting the name");
+                return;
+            },
+        };
+        let path = path.join("project")
+            .join(projectname.trim())
+            .join("register.txt");
+        let mut lines: Vec<String> = Vec::new();
+        match File::open(path) {
+            Ok(content) => {
+                let content_buff = BufReader::new(content);
+                for line in content_buff.lines() {
+                    match line {
+                        Ok(line) => {
+                            if let Ok(name) = take_name(line.clone()) {
+                                if name == file {
+                                    lines.push(line.to_string());
+                                }
+                            };
+                        },
+                        Err(_) => println!("err")
+                    }
+                }
+            },
+            Err(_) => println!("err opening register"),
+        };
+
+        for entry in lines.iter() {
+            println!("-> {}", entry);
+        }
+    };
+
 }

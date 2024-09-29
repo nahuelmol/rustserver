@@ -3,7 +3,7 @@ use crate::objs::obj::CliCommand;
 use crate::cmds::filters::filter_switch;
 use crate::filesys::checker::{ check_raw_target, current_project };
 use crate::filesys::checker::get_all_content;
-use crate::filesys::file::{ readfile, loadfile };
+use crate::filesys::file::{ readfile, loadfile, delete_file };
 
 use crate::project::methods::{ startproject, checkprojects };
 use crate::project::methods::{ switch_projects };
@@ -43,6 +43,8 @@ pub fn switcher(cmd:&CliCommand){
         current_project();
     } else if action == "sw" {
         switch_projects(cmd.get_target());
+    } else if action == "delete" {
+        delete_file(cmd.get_target());
     } else {
         println!("not registered");
     }
