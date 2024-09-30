@@ -385,12 +385,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "gnuplot"
+version = "0.0.43"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ce70b22788c02857a6436b96744f9030dd89e17c8482ddf674523c0a1f8ab6c"
+dependencies = [
+ "byteorder",
+ "tempfile",
+]
+
+[[package]]
 name = "goseis"
 version = "0.1.0"
 dependencies = [
  "byteorder",
  "giga-segy-core",
  "giga-segy-in",
+ "gnuplot",
  "image",
  "serde_json",
 ]
