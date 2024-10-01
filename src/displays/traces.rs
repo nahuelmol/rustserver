@@ -3,9 +3,6 @@ use std::env;
 use gnuplot::{Figure, Caption, Color};
 use gnuplot::{ AxesCommon, Graph};
 use giga_segy_in::SegyFile;
-//use std::str::FromStr;
-//use std::process::Command;
-//use std::io::Write;
 
 fn get_trace_data(opc:String) -> Result<Vec<f32>,String> {
     let opt:i32 = opc.trim().parse().unwrap(); 
@@ -27,6 +24,19 @@ fn get_trace_data(opc:String) -> Result<Vec<f32>,String> {
     return Err("hello".to_string());
 }
 
+fn graph_trace(mut fg:Figure, data:Vec<f32>, xaxes:Vec<i32>) {
+    fg.axes2d()
+        .set_title("A plot", &[])
+        .set_legend(Graph(0.5), Graph(0.9), &[], &[])
+        .set_x_label("x", &[])
+        .lines(
+            &data,
+            &xaxes,
+            &[Color("red")],
+        );
+    fg.show().unwrap();
+}
+
 pub fn display_trace(){
     println!("please, give me the trace number?");
     let mut opc = String::new();
@@ -44,42 +54,6 @@ pub fn display_trace(){
 
     let len:i32 = samples.len().try_into().unwrap();
     let xaxes: Vec<i32> = (0..len).collect();
-    let mut fg = Figure::new();
-    let mut sample2: Vec<f32> = Vec::new();
-    for valor in samples.clone() {
-        sample2.push(valor + (0.2 as f32));
-    }
-    fg.set_multiplot_layout(1,10);
-
-    fg.axes2d()
-        .set_title("A plot", &[])
-        .set_legend(Graph(0.5), Graph(0.9), &[], &[])
-        .set_x_label("x", &[])
-        .set_y_label("y^2", &[])
-        .lines(
-            &samples,
-            &xaxes,
-            &[Color("blue"), Caption("hello")],
-        );
-    fg.axes2d()
-        .set_title("A plot", &[])
-        .set_legend(Graph(0.5), Graph(0.9), &[], &[])
-        .set_x_label("x", &[])
-        .lines(
-            &sample2,
-            &xaxes,
-            &[Color("red")],
-        );
-    for i in 0..8 {
-        fg.axes2d()
-            .set_title("A plot", &[])
-            .set_x_label("x", &[])
-            .lines(
-                &sample2,
-                &xaxes,
-                &[Color("red")],
-            );
-    }
-    fg.show().unwrap();
-    let _ = fg.save_to_png("example.png",800,600);
+    let fg = Figure::new();
+    graph_trace(fg, samples, xaxes);
 }

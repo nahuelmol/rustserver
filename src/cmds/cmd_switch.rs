@@ -8,6 +8,7 @@ use crate::filesys::file::{ readfile, loadfile, delete_file };
 use crate::project::methods::{ startproject, checkprojects };
 use crate::project::methods::{ switch_projects };
 use crate::displays::traces::{ display_trace };
+use crate::displays::image::{ display_image };
 
 pub fn switcher(cmd:&CliCommand){
     let action = cmd.get_action();
@@ -37,6 +38,8 @@ pub fn switcher(cmd:&CliCommand){
         startproject();
     } else if action == "projects" {
         checkprojects();
+    } else if action == "dplay" {
+        display_image(cmd.get_target(), cmd);
     } else if action == "dt" { //display trace
         display_trace();
     } else if action == "current" {

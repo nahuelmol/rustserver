@@ -34,7 +34,7 @@ pub fn readfile(target:&str) {
     }
 }
 
-fn currentp_name() -> Result<String, String> {
+pub fn currentp_name() -> Result<String, String> {
     if let Ok(path) = env::current_dir() {
         let pathproject = path.join("project")
             .join("current.json");

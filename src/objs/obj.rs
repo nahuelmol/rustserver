@@ -62,10 +62,10 @@ impl CliCommand {
         let result = std::panic::catch_unwind(||&self.flags[2]);
         match result {
             Ok(opc) => {
-                Ok(opc)
+                return Ok(opc);
             },
             Err(_)=> {
-                Err("error")
+                return Err("error");
             }
 
         }
