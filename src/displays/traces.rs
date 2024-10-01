@@ -3,16 +3,19 @@ use std::env;
 use gnuplot::{Figure, Caption, Color};
 use gnuplot::{ AxesCommon, Graph};
 use giga_segy_in::SegyFile;
+//use std::str::FromStr;
+//use std::process::Command;
+//use std::io::Write;
 
-fn get_trace_data(_opc:String) -> Result<Vec<f32>,String> {
+fn get_trace_data(opc:String) -> Result<Vec<f32>,String> {
+    let opt:i32 = opc.trim().parse().unwrap(); 
     if let Ok(path) = env::current_dir() {
         let path = path.join("data")
-            .join("Line_301.segy");
+            .join("seismic.segy");
         let file = SegyFile::open(path.to_str().unwrap(), Default::default()).unwrap();
-        let text_header: &str = file.get_text_header();
         let mut i = 0;
         for trace in file.traces_iter() {
-            if i == 0 { 
+            if i == opt { 
                 let data:Vec<f32> = file.get_trace_data_as_f32_from_trace(trace).unwrap();
                 return Ok(data);
             };
@@ -30,12 +33,11 @@ pub fn display_trace(){
     stdin()
         .read_line(&mut opc)
         .expect("err at stdin");
-    println!("trace is {}", opc);
 
     let samples = match get_trace_data(opc) {
-        Ok(data) =>  data,
-        Err(_) => {
-            println!("bad move");
+        Ok(data) => data,
+        Err(_)=> {
+            println!("getting out");
             return;
         },
     };
@@ -43,6 +45,12 @@ pub fn display_trace(){
     let len:i32 = samples.len().try_into().unwrap();
     let xaxes: Vec<i32> = (0..len).collect();
     let mut fg = Figure::new();
+    let mut sample2: Vec<f32> = Vec::new();
+    for valor in samples.clone() {
+        sample2.push(valor + (0.2 as f32));
+    }
+    fg.set_multiplot_layout(1,10);
+
     fg.axes2d()
         .set_title("A plot", &[])
         .set_legend(Graph(0.5), Graph(0.9), &[], &[])
@@ -51,7 +59,27 @@ pub fn display_trace(){
         .lines(
             &samples,
             &xaxes,
-            &[Caption("Parabola")],
+            &[Color("blue"), Caption("hello")],
         );
+    fg.axes2d()
+        .set_title("A plot", &[])
+        .set_legend(Graph(0.5), Graph(0.9), &[], &[])
+        .set_x_label("x", &[])
+        .lines(
+            &sample2,
+            &xaxes,
+            &[Color("red")],
+        );
+    for i in 0..8 {
+        fg.axes2d()
+            .set_title("A plot", &[])
+            .set_x_label("x", &[])
+            .lines(
+                &sample2,
+                &xaxes,
+                &[Color("red")],
+            );
+    }
     fg.show().unwrap();
+    let _ = fg.save_to_png("example.png",800,600);
 }
