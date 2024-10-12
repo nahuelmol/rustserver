@@ -4,7 +4,7 @@ use gnuplot::{Figure, Caption, Color};
 use gnuplot::{ AxesCommon, Graph};
 use giga_segy_in::SegyFile;
 
-fn get_trace_data(opc:String) -> Result<Vec<f32>,String> {
+pub fn get_trace_data(opc:String) -> Result<Vec<f32>,String> {
     let opt:i32 = opc.trim().parse().unwrap(); 
     if let Ok(path) = env::current_dir() {
         let path = path.join("data")
