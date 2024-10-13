@@ -4,11 +4,11 @@ use gnuplot::{Figure, Caption, Color};
 use gnuplot::{ AxesCommon, Graph};
 use giga_segy_in::SegyFile;
 
-pub fn get_trace_data(opc:String) -> Result<Vec<f32>,String> {
+pub fn get_trace_data(opc:String, target:String) -> Result<Vec<f32>,String> {
     let opt:i32 = opc.trim().parse().unwrap(); 
     if let Ok(path) = env::current_dir() {
         let path = path.join("data")
-            .join("seismic.segy");
+            .join(target);
         let file = SegyFile::open(path.to_str().unwrap(), Default::default()).unwrap();
         let mut i = 0;
         for trace in file.traces_iter() {
@@ -44,7 +44,7 @@ pub fn display_trace(){
         .read_line(&mut opc)
         .expect("err at stdin");
 
-    let samples = match get_trace_data(opc) {
+    let samples = match get_trace_data(opc,"seismic.sgy".to_string()) {
         Ok(data) => data,
         Err(_)=> {
             println!("getting out");

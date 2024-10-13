@@ -7,6 +7,7 @@ use std::env;
 use std::io::{ BufReader, BufWriter, BufRead, Write };
 use std::fs;
 use std::fs::OpenOptions;
+use std::path::PathBuf;
 
 use giga_segy_in::SegyFile;
 use gnuplot::{ Graph, AxesCommon, Figure, Color };
@@ -50,30 +51,94 @@ fn data_script() {
     }
 }
 
-fn gnu_script() {
+
+fn datas_builder(path:PathBuf, trace) {
+    //this save the data from data.dat into the data arrays in gnuplot
+    let file = OpenOptions::new()
+        .create(false)
+        .write(true)
+        .open(path)
+        .expect("opening file");
+    let mut writer = BufWriter::new(file);
+    let nsamples = trace.len();
+    let mut samples:i32 = 10;
+    let mut traces:i32 = 10;
+
+    let forline = format!("for ({}:{}) {", 1, ntraces);
+    writeln!(writer, "{}", forline);
+
+    let arrayline = format!("array data{}[{}] \n}", ntraces, nsamples);
+    writeln!(writer, "{}", arrayline);
+
+    let forline = format!("for ({}:{}) {", 1, ntraces);
+    writeln!(writer, "{}", forline);
+
+    for i in ntraces {
+        let mut line = String::new();
+        let trace = get_trace_data(i.to_string(), target.to_string());
+        for j in nsamples {
+            
+            trace[j];
+        }
+    }
+
+    for sample in trace.iter() {
+        let mut line = String::new();
+        for j in 1..traces {
+            line = [line, format!("{}", j)].concat();
+        }
+        writeln!(writer, "{}", line)
+            .expect("writeln error");
+    }
+}
+
+fn gnu_script(target:&str) {
     let content = r#"
 set title "seccion"
 set xlabel "offset"
 set ylabel "time"
+
+offset_inicio=1
+tiempo_inicio=1
     "#;
     if let Ok(path) = env::current_dir() {
-        let gnupath = path.join("display")
-            .join("index.gnuplot");
-        if gnupath.exists() {
-            match fs::remove_file(gnupath.clone()) {
-                Ok(_) => println!("removing {}", gnupath.display()),
-                Err(err) => println!("error removing file: {}", err),
-            };
-        }
-        create_display();
-        match File::create(gnupath) {
-            Ok(mut file) => {
-                file.write_all(content.as_bytes())
-                .expect("It cannot be written");
-            },
-            Err(_) => println!("err"),
+        let path = path.join("data")
+            .join(target);
+
+        let file = SegyFile::open(path
+                .to_str().unwrap(), 
+                Default::default())
+                .unwrap();
+        let bin_header = file.get_bin_header();
+        let num_traces = bin_header.no_traces;
+        let num_sampls = bin_header.no_samples;
+
+        let offset_fin = format!("offset_fin={}\n", num_traces);
+        let tiempo_fin = format!("tiempo_fin={}\n", num_sampls);
+        let content = [content,&offset_fin].concat();
+        let content = [content,tiempo_fin].concat();
+
+        if let Ok(path) = env::current_dir() {
+            let gnupath = path.join("display")
+                .join("index.gnuplot");
+            if gnupath.exists() {
+                match fs::remove_file(gnupath.clone()) {
+                    Ok(_) => println!("removing {}", gnupath.display()),
+                    Err(err) => println!("error removing file: {}", err),
+                };
+            }
+            create_display();
+            match File::create(gnupath.clone()) {
+                Ok(mut file) => {
+                    file.write_all(content.as_bytes())
+                    .expect("It cannot be written");
+                },
+                Err(_) => println!("err"),
+            }
+            datas_builder(gnupath, trace);
         }
     }
+    
 }
 
 fn display(projectname:String, target:&str) {
@@ -87,7 +152,7 @@ fn display(projectname:String, target:&str) {
         let mut fg = Figure::new();
         fg.set_multiplot_layout(1,ntraces.into());
         for i in 0..ntraces {
-            let samples = match get_trace_data(i.to_string()) {
+            let samples = match get_trace_data(i.to_string(), target.to_string()) {
                 Ok(data) => data,
                 Err(_)=> {
                     println!("getting out");
@@ -151,14 +216,8 @@ pub fn display_image(target:&str, cmd:&CliCommand) {
                 },
             }
         };
-        /*if exists > 0 {
-            println!("file exists");
-            display(projectname, target);
-        } else {
-            println!("file doesnt exists");
-        }*/
 
-        gnu_script();
+        gnu_script(target);
         //data_script();
     };
 
