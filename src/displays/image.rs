@@ -38,12 +38,35 @@ fn data_script() {
             .expect("creating file");
         let mut writer = BufWriter::new(file);
         let mut samples:i32 = 10;
-        let mut traces:i32 = 10;
+        let mut traces:i32 = 4;
 
-        for i in 1..samples {
+        let ntraces = traces as usize;
+        let mut matrix: Vec<Vec<f32>> = Vec::new();
+        for j in 0..ntraces {
+            let trace = match get_trace_data(j.to_string(),"seismic.segy".to_string()) {
+                Ok(trace) => trace,
+                Err(_)=> return,
+            };
+            let tracelen = trace.len() - 1;
+            println!("{} trace", j);
+            println!("{} tracelen", tracelen);
+            println!("{} sample", trace[0]);
+            for (i, elem) in trace.iter().enumerate() {
+                if j == 0 {
+                    matrix.push(vec![*elem]);
+                }
+            }
+            for (i,_) in trace.iter().enumerate() {
+                if j > 0 {
+                    matrix[i].push(trace[i]);
+                }
+            }
+        }
+        println!("{:?}", matrix[0]);
+        for j in matrix.iter() {
             let mut line = String::new();
-            for j in 1..traces {
-                line = [line, format!("{}", j)].concat();
+            for elem in j.iter() {
+                line = [line, format!("{}\t", elem.to_string())].concat();
             }
             writeln!(writer, "{}", line)
                 .expect("writeln error");
@@ -52,7 +75,7 @@ fn data_script() {
 }
 
 
-fn datas_builder(path:PathBuf, trace) {
+fn datas_builder(path:PathBuf, trace:Vec<i32>) {
     //this save the data from data.dat into the data arrays in gnuplot
     let file = OpenOptions::new()
         .create(false)
@@ -64,20 +87,18 @@ fn datas_builder(path:PathBuf, trace) {
     let mut samples:i32 = 10;
     let mut traces:i32 = 10;
 
-    let forline = format!("for ({}:{}) {", 1, ntraces);
+    let forline = format!("for ({}:{}) ", 1, traces);
     writeln!(writer, "{}", forline);
 
-    let arrayline = format!("array data{}[{}] \n}", ntraces, nsamples);
+    let arrayline = format!("array data{}[{}] \n", traces, nsamples);
     writeln!(writer, "{}", arrayline);
 
-    let forline = format!("for ({}:{}) {", 1, ntraces);
+    let forline = format!("for ({}:{}) ", 1, traces);
     writeln!(writer, "{}", forline);
 
-    for i in ntraces {
+    for i in 1..trace.len() {
         let mut line = String::new();
-        let trace = get_trace_data(i.to_string(), target.to_string());
-        for j in nsamples {
-            
+        for j in 1..nsamples {
             trace[j];
         }
     }
@@ -135,7 +156,7 @@ tiempo_inicio=1
                 },
                 Err(_) => println!("err"),
             }
-            datas_builder(gnupath, trace);
+            //datas_builder(gnupath, trace);
         }
     }
     
@@ -217,8 +238,8 @@ pub fn display_image(target:&str, cmd:&CliCommand) {
             }
         };
 
-        gnu_script(target);
-        //data_script();
+        //gnu_script(target);
+        data_script();
     };
 
 }
