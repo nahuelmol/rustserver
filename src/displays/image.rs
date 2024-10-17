@@ -4,7 +4,7 @@ use crate::displays::traces::get_trace_data;
 
 use std::fs::{ File, remove_file };
 use std::env;
-use std::io::{ BufReader, BufWriter, BufRead, Write };
+use std::io::{ BufReader, BufWriter, BufRead, Write, Seek, SeekFrom };
 use std::fs;
 use std::fs::OpenOptions;
 use std::path::PathBuf;
@@ -19,7 +19,7 @@ fn create_display() {
     }
 }
 
-fn data_script() {
+fn data_script() -> Result<Vec<Vec<f32>>, String>{
     if let Ok(datapath) = env::current_dir() {
         let datapath = datapath.join("display")
             .join("data.dat");
@@ -45,7 +45,7 @@ fn data_script() {
         for j in 0..ntraces {
             let trace = match get_trace_data(j.to_string(),"seismic.segy".to_string()) {
                 Ok(trace) => trace,
-                Err(_)=> return,
+                Err(_) => return Err("error".to_string()),
             };
             let tracelen = trace.len() - 1;
             println!("{} trace", j);
@@ -62,7 +62,6 @@ fn data_script() {
                 }
             }
         }
-        println!("{:?}", matrix[0]);
         for j in matrix.iter() {
             let mut line = String::new();
             for elem in j.iter() {
@@ -71,49 +70,52 @@ fn data_script() {
             writeln!(writer, "{}", line)
                 .expect("writeln error");
         }
+        return Ok(matrix);
+    } else {
+        return Err("error, path not found".to_string());
     }
 }
 
 
-fn datas_builder(path:PathBuf, trace:Vec<i32>) {
+fn datas_builder(path:PathBuf, nsamples:usize, ntraces:usize) {
     //this save the data from data.dat into the data arrays in gnuplot
-    let file = OpenOptions::new()
+    let mut file = OpenOptions::new()
         .create(false)
         .write(true)
         .open(path)
         .expect("opening file");
+    file.seek(SeekFrom::End(0)).
+        expect("no se pudo buscar la ultima linea");
     let mut writer = BufWriter::new(file);
-    let nsamples = trace.len();
-    let mut samples:i32 = 10;
-    let mut traces:i32 = 10;
 
-    let forline = format!("for ({}:{}) ", 1, traces);
-    writeln!(writer, "{}", forline);
-
-    let arrayline = format!("array data{}[{}] \n", traces, nsamples);
-    writeln!(writer, "{}", arrayline);
-
-    let forline = format!("for ({}:{}) ", 1, traces);
-    writeln!(writer, "{}", forline);
-
-    for i in 1..trace.len() {
-        let mut line = String::new();
-        for j in 1..nsamples {
-            trace[j];
-        }
+    writeln!(writer, "\n");
+    for n in 0..ntraces {
+        let arrayline = format!("array data{}[{}]", n, nsamples);
+        writeln!(writer, "{}", arrayline);
     }
 
-    for sample in trace.iter() {
-        let mut line = String::new();
-        for j in 1..traces {
-            line = [line, format!("{}", j)].concat();
-        }
-        writeln!(writer, "{}", line)
-            .expect("writeln error");
+    writeln!(writer, "unset key");
+    writeln!(writer, "\n");
+
+    for n in 0..ntraces {
+        let head= format!("do for [i=1:{}] {{", nsamples);
+        let arg = format!("\"awk 'NR==\"{} \" 'data.dat'",n);
+        let cnt = format!("\tdata{}[i] = real(word(system({}),{}))",n,arg,n);
+        let end = "})".to_string();
+        writeln!(writer,"{}", head);
+        writeln!(writer,"{}", cnt);
+        writeln!(writer,"{}", end);
     }
+
+    writeln!(writer, "\n");
+    writeln!(writer, "my_data(x) = data[x]");
+    writeln!(writer, "set parametric");
+    let plotfor = format!("plot for [offset=offset_inicio:offset_fin-1] my_data(t) + (offset-offset_inicio) * intervalo, \
+        \n\tt with lines");
+    writeln!(writer, "{}", plotfor);
 }
 
-fn gnu_script(target:&str) {
+fn gnu_script(target:&str, nsamples:usize, ntraces:usize) {
     let content = r#"
 set title "seccion"
 set xlabel "offset"
@@ -130,12 +132,10 @@ tiempo_inicio=1
                 .to_str().unwrap(), 
                 Default::default())
                 .unwrap();
-        let bin_header = file.get_bin_header();
-        let num_traces = bin_header.no_traces;
-        let num_sampls = bin_header.no_samples;
+        let _bin_header = file.get_bin_header();
 
-        let offset_fin = format!("offset_fin={}\n", num_traces);
-        let tiempo_fin = format!("tiempo_fin={}\n", num_sampls);
+        let offset_fin = format!("offset_fin={}\n", ntraces);
+        let tiempo_fin = format!("tiempo_fin={}\n", nsamples);
         let content = [content,&offset_fin].concat();
         let content = [content,tiempo_fin].concat();
 
@@ -148,7 +148,6 @@ tiempo_inicio=1
                     Err(err) => println!("error removing file: {}", err),
                 };
             }
-            create_display();
             match File::create(gnupath.clone()) {
                 Ok(mut file) => {
                     file.write_all(content.as_bytes())
@@ -156,7 +155,7 @@ tiempo_inicio=1
                 },
                 Err(_) => println!("err"),
             }
-            //datas_builder(gnupath, trace);
+            datas_builder(gnupath, nsamples, ntraces);
         }
     }
     
@@ -238,8 +237,11 @@ pub fn display_image(target:&str, cmd:&CliCommand) {
             }
         };
 
-        //gnu_script(target);
-        data_script();
+        let data = match data_script() {
+            Ok(data) => data,
+            Err(_) => return,
+        };
+        gnu_script(target,data.len(), data[0].len());
     };
 
 }
