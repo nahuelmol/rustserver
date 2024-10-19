@@ -37,8 +37,8 @@ fn data_script() -> Result<Vec<Vec<f32>>, String>{
             .open(datapath)
             .expect("creating file");
         let mut writer = BufWriter::new(file);
-        let mut samples:i32 = 10;
-        let mut traces:i32 = 4;
+        let samples:i32 = 10;
+        let traces:i32 = 4;
 
         let ntraces = traces as usize;
         let mut matrix: Vec<Vec<f32>> = Vec::new();

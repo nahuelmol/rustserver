@@ -94,7 +94,47 @@ fn move_file(file: &str) {
             }
         }
     }
+}
 
+fn already_line(newline:String) -> Result<bool,String> {
+    //this will check if the line already exists in the project
+    //same file with the same state
+    if let Ok(path) = env::current_dir() {
+        let projectname = match currentp_name() {
+            Ok(name) => name,
+            Err(_) => { 
+                return Err("error getting the name".to_string());
+            },
+        };
+        let registerpath = path.join("project")
+            .join(projectname.trim())
+            .join("register.txt");
+        match File::open(registerpath) {
+            Ok(content) => {
+                let inbuffer = BufReader::new(content);
+                for line in inbuffer.lines() {
+                    match line {
+                        Ok(lineok) => {
+                            if lineok == newline {
+                                return Ok(true);
+                            } else {
+                                return Ok(false);
+                            }
+                        },
+                        Err(_) => { 
+                            return Err("err reading lines".to_string())
+                        }
+                    }
+                }
+            },
+            Err(_) => {
+                return Err("err with the file".to_string());
+            },
+        };
+        return Ok(true);
+    } else {
+        return Err("problem getting the current dir".to_string())
+    }
 }
 
 pub fn loadfile(target:&str, cmd:&CliCommand){
@@ -130,9 +170,13 @@ pub fn loadfile(target:&str, cmd:&CliCommand){
             .append(true)
             .open(registerpath)
             .unwrap();
-
-        writeln!(file, "{}", newline.as_str()).unwrap();
-        move_file(target);
+        
+        if let Ok(res) = already_line(newline.clone()) {
+            if res == true {
+                writeln!(file, "{}", newline.as_str()).unwrap();
+                move_file(target);
+            }
+        };
     };
 }
 
@@ -179,8 +223,8 @@ pub fn delete_file(file:&str) {
             Err(_) => println!("err opening register"),
         };
 
-        for entry in lines.iter() {
-            println!("-> {}", entry);
+        for (i,entry) in lines.iter().enumerate() {
+            println!("{} -> {}", i, entry);
         }
     };
 

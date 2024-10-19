@@ -38,7 +38,7 @@ impl CliCommand {
     }
 
     pub fn get_target(&self) -> &str {
-            &self.flags[1]
+        &self.flags[1]
     }
 
     pub fn is_target(&self) -> bool {
@@ -59,10 +59,21 @@ impl CliCommand {
     }
 
     pub fn get_state(&self) -> Result<&str, &str> {
+        let states = ["up", "stk", "nmo"];
         let result = std::panic::catch_unwind(||&self.flags[2]);
         match result {
             Ok(opc) => {
-                return Ok(opc);
+                let mut exists = false;
+                for state in states.iter() {
+                    if state == opc {
+                        exists = true;
+                    }
+                }
+                if exists == true {
+                    return Ok(opc);
+                } else {
+                    return Err("not a valid state");
+                };
             },
             Err(_)=> {
                 return Err("error");

@@ -52,5 +52,3 @@ pub fn switcher(cmd:&CliCommand){
         println!("not registered");
     }
 }
- 
-
